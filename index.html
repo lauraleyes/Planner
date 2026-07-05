@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#12101a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Planner">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Weekly Planner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: #12101a;
+    color: #e7e1f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 0 0 80px 0;
+  }
+  .header {
+    padding: 48px 20px 16px;
+    text-align: center;
+    background: linear-gradient(180deg, #1c1030 0%, #12101a 100%);
+  }
+  .header h1 { font-size: 13px; letter-spacing: 5px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 4px; }
+  .header .moon { font-size: 28px; display: block; margin-bottom: 4px; }
+  .header .date { font-size: 15px; color: #c9b8f0; letter-spacing: 1px; }
+
+  .notif-banner {
+    margin: 8px 16px;
+    padding: 12px 16px;
+    background: #1e1b2e;
+    border-radius: 12px;
+    border: 1px solid #3d2d6e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .notif-banner span { font-size: 13px; color: #b9a7f0; flex: 1; }
+  .notif-banner button {
+    background: #3d2d6e;
+    border: none;
+    color: #e7e1f7;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .notif-banner.hidden { display: none; }
+
+  .day-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 12px 20px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .day-nav::-webkit-scrollbar { display: none; }
+  .day-pill {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    border: 1px solid #2e2a3d;
+    background: #1a1726;
+    cursor: pointer;
+    min-width: 48px;
+  }
+  .day-pill.active { background: #3d2d6e; border-color: #b9a7f0; }
+  .day-pill .day-name { font-size: 11px; color: #6b5f8a; text-transform: uppercase; letter-spacing: 1px; }
+  .day-pill.active .day-name { color: #c9b8f0; }
+  .day-pill .day-num { font-size: 16px; font-weight: 600; color: #9a8ec0; }
+  .day-pill.active .day-num { color: #e7e1f7; }
+  .day-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+  .day-pill.has-activity .dot { background: #b9a7f0; }
+
+  .schedule { padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .slot {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px; border-radius: 14px;
+    background: #1a1726; border-left: 3px solid transparent;
+    cursor: pointer; transition: transform 0.15s;
+  }
+  .slot:active { transform: scale(0.98); }
+  .slot.meal { border-left-color: #6b5f8a; cursor: default; }
+  .slot.wake { border-left-color: #f0d080; cursor: default; }
+  .slot.study { border-left-color: #b9a7f0; }
+  .slot.dark { border-left-color: #e07090; }
+  .slot.completed { background: #1e1b2e; }
+  .slot.completed .slot-label { color: #6b5f8a; text-decoration: line-through; }
+  .slot-time { font-size: 12px; color: #6b5f8a; min-width: 40px; font-variant-numeric: tabular-nums; }
+  .slot-icon { font-size: 20px; min-width: 28px; text-align: center; }
+  .slot-label { font-size: 15px; color: #e7e1f7; flex: 1; }
+  .slot-check {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid #3d2d6e;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .slot.completed .slot-check { background: #b9a7f0; border-color: #b9a7f0; color: #12101a; }
+  .slot.meal .slot-check, .slot.wake .slot-check { display: none; }
+
+  .detail-view {
+    display: none; position: fixed; inset: 0;
+    background: #12101a; z-index: 100; flex-direction: column;
+  }
+  .detail-view.open { display: flex; }
+  .detail-header {
+    padding: 56px 20px 20px;
+    background: linear-gradient(180deg, #1c1030 0%, #12101a 100%);
+    text-align: center; position: relative;
+  }
+  .back-btn {
+    position: absolute; top: 56px; left: 20px;
+    background: none; border: none; color: #b9a7f0;
+    font-size: 24px; cursor: pointer; padding: 4px;
+  }
+  .detail-icon { font-size: 44px; display: block; margin-bottom: 8px; }
+  .detail-name { font-size: 22px; color: #e7e1f7; margin-bottom: 4px; }
+  .detail-time { font-size: 13px; color: #6b5f8a; letter-spacing: 1px; }
+  .detail-body { padding: 24px 20px; flex: 1; overflow-y: auto; }
+  .streak-card {
+    background: #1a1726; border-radius: 16px; padding: 20px;
+    text-align: center; margin-bottom: 20px; border: 1px solid #2e2a3d;
+  }
+  .streak-label { font-size: 11px; letter-spacing: 2px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 8px; }
+  .streak-number { font-size: 52px; font-weight: 700; color: #b9a7f0; line-height: 1; }
+  .streak-unit { font-size: 13px; color: #6b5f8a; margin-top: 4px; }
+  .week-dots {
+    background: #1a1726; border-radius: 16px; padding: 20px;
+    margin-bottom: 20px; border: 1px solid #2e2a3d;
+  }
+  .week-dots-label { font-size: 11px; letter-spacing: 2px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 16px; }
+  .dots-row { display: flex; justify-content: space-between; gap: 6px; }
+  .dot-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+  .dot-item .d-name { font-size: 10px; color: #6b5f8a; text-transform: uppercase; }
+  .dot-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #2e2a3d;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .dot-circle.done { background: #b9a7f0; }
+  .dot-circle.today { border: 2px solid #b9a7f0; }
+  .detail-check-btn {
+    width: 100%; padding: 16px; border-radius: 14px;
+    border: none; background: #3d2d6e; color: #e7e1f7;
+    font-size: 16px; cursor: pointer; letter-spacing: 1px;
+  }
+  .detail-check-btn.done { background: #b9a7f0; color: #12101a; font-weight: 600; }
+  .detail-check-btn:active { transform: scale(0.97); }
+  .deco { text-align: center; color: #2e2a3d; font-size: 16px; letter-spacing: 6px; padding: 16px 0 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="moon">☽</span>
+  <h1>Weekly Planner</h1>
+  <div class="date" id="headerDate"></div>
+</div>
+
+<div class="notif-banner" id="notifBanner">
+  <span>🔔 Activar recordatorios</span>
+  <button onclick="requestNotifications()">Activar</button>
+</div>
+
+<div class="day-nav" id="dayNav"></div>
+<div class="schedule" id="schedule"></div>
+<div class="deco">· ✦ ·</div>
+
+<div class="detail-view" id="detailView">
+  <div class="detail-header">
+    <button class="back-btn" onclick="closeDetail()">←</button>
+    <span class="detail-icon" id="dIcon"></span>
+    <div class="detail-name" id="dName"></div>
+    <div class="detail-time" id="dTime"></div>
+  </div>
+  <div class="detail-body">
+    <div class="streak-card">
+      <div class="streak-label">Racha actual</div>
+      <div class="streak-number" id="streakNum">0</div>
+      <div class="streak-unit">días consecutivos <span id="streakFire"></span></div>
+    </div>
+    <div class="week-dots">
+      <div class="week-dots-label">Últimos 7 días</div>
+      <div class="dots-row" id="dotsRow"></div>
+    </div>
+    <button class="detail-check-btn" id="detailCheckBtn" onclick="toggleFromDetail()">Marcar como completado</button>
+  </div>
+</div>
+
+<script>
+const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const FULL_DAYS = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+
+const activities = [
+  { id: "despertar", time: "10:00", hour: 10, min: 0,  icon: "☀️", label: "Despertarse",     type: "wake" },
+  { id: "desayuno",  time: "10:30", hour: 10, min: 30, icon: "☕", label: "Desayunar",        type: "meal" },
+  { id: "claude",    time: "11:00", hour: 11, min: 0,  icon: "🤖", label: "Claude 101",       type: "study" },
+  { id: "almuerzo",  time: "13:00", hour: 13, min: 0,  icon: "🍽️", label: "Almorzar",        type: "meal" },
+  { id: "cyber",     time: "13:30", hour: 13, min: 30, icon: "🛡️", label: "Cybersecurity",   type: "study" },
+  { id: "merienda",  time: "17:00", hour: 17, min: 0,  icon: "🌿", label: "Merendar",         type: "meal" },
+  { id: "design",    time: "17:30", hour: 17, min: 30, icon: "🎨", label: "Product Designer", type: "study" },
+  { id: "cena",      time: "20:00", hour: 20, min: 0,  icon: "🌙", label: "Cenar",            type: "meal" },
+  { id: "artes",     time: "21:00", hour: 21, min: 0,  icon: "🖤", label: "Artes Oscuras",    type: "dark" },
+];
+
+let completions = {};
+try { completions = JSON.parse(localStorage.getItem('planner_completions') || '{}'); } catch(e) {}
+function save() { try { localStorage.setItem('planner_completions', JSON.stringify(completions)); } catch(e) {} }
+function dateStr(d) { return d.toISOString().slice(0, 10); }
+function isCompleted(actId, d) { return !!(completions[actId] && completions[actId][dateStr(d)]); }
+function toggleCompletion(actId, d) {
+  if (!completions[actId]) completions[actId] = {};
+  const k = dateStr(d);
+  if (completions[actId][k]) delete completions[actId][k];
+  else completions[actId][k] = true;
+  save();
+}
+function getStreak(actId) {
+  let streak = 0;
+  const d = new Date();
+  if (!isCompleted(actId, d)) d.setDate(d.getDate() - 1);
+  while (isCompleted(actId, d)) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+    if (streak > 365) break;
+  }
+  return streak;
+}
+
+const today = new Date();
+let currentDayOffset = 0;
+function currentDate() { const d = new Date(today); d.setDate(d.getDate() + currentDayOffset); return d; }
+
+// NOTIFICATIONS
+function checkNotifBanner() {
+  if (!('Notification' in window)) { document.getElementById('notifBanner').classList.add('hidden'); return; }
+  if (Notification.permission === 'granted') { document.getElementById('notifBanner').classList.add('hidden'); scheduleNotifications(); }
+}
+
+function requestNotifications() {
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') {
+      document.getElementById('notifBanner').classList.add('hidden');
+      scheduleNotifications();
+    }
+  });
+}
+
+function scheduleNotifications() {
+  if (Notification.permission !== 'granted') return;
+  activities.forEach(act => {
+    const now = new Date();
+    const target = new Date();
+    target.setHours(act.hour, act.min, 0, 0);
+    let delay = target - now;
+    if (delay < 0) delay += 24 * 60 * 60 * 1000; // next day
+    setTimeout(() => {
+      new Notification('✦ ' + act.label, {
+        body: 'Son las ' + act.time + ' — hora de ' + act.label.toLowerCase(),
+        icon: 'icons/icon-192.png',
+        badge: 'icons/icon-192.png',
+        tag: act.id
+      });
+      // reschedule for next day
+      setTimeout(() => scheduleNotifications(), 1000);
+    }, delay);
+  });
+}
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+function buildDayNav() {
+  const nav = document.getElementById('dayNav');
+  nav.innerHTML = '';
+  for (let i = -3; i <= 3; i++) {
+    const d = new Date(today); d.setDate(d.getDate() + i);
+    const btn = document.createElement('div');
+    btn.className = 'day-pill' + (i === currentDayOffset ? ' active' : '');
+    const hasAny = activities.filter(a => a.type === 'study' || a.type === 'dark').some(a => isCompleted(a.id, d));
+    if (hasAny) btn.classList.add('has-activity');
+    btn.innerHTML = `<span class="day-name">${DAYS[d.getDay()]}</span><span class="day-num">${d.getDate()}</span><span class="dot"></span>`;
+    const offset = i;
+    btn.onclick = () => { currentDayOffset = offset; render(); };
+    nav.appendChild(btn);
+  }
+  setTimeout(() => { const a = nav.querySelector('.active'); if (a) a.scrollIntoView({ inline: 'center', behavior: 'smooth' }); }, 50);
+}
+
+function buildSchedule() {
+  const d = currentDate();
+  document.getElementById('schedule').innerHTML = activities.map(a => {
+    const done = isCompleted(a.id, d);
+    const clickable = a.type === 'study' || a.type === 'dark';
+    return `<div class="slot ${a.type} ${done ? 'completed' : ''}" onclick="${clickable ? `openDetail('${a.id}')` : ''}">
+      <span class="slot-time">${a.time}</span>
+      <span class="slot-icon">${a.icon}</span>
+      <span class="slot-label">${a.label}</span>
+      ${clickable ? `<div class="slot-check">${done ? '✓' : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function render() {
+  document.getElementById('headerDate').textContent = FULL_DAYS[currentDate().getDay()] + ' ' + currentDate().getDate();
+  buildDayNav();
+  buildSchedule();
+}
+
+let currentDetailId = null;
+function openDetail(actId) {
+  const act = activities.find(a => a.id === actId);
+  currentDetailId = actId;
+  document.getElementById('dIcon').textContent = act.icon;
+  document.getElementById('dName').textContent = act.label;
+  document.getElementById('dTime').textContent = act.time + ' hs';
+  const streak = getStreak(actId);
+  document.getElementById('streakNum').textContent = streak;
+  document.getElementById('streakFire').textContent = streak >= 3 ? '🔥' : streak >= 1 ? '⭐' : '';
+  const dotsRow = document.getElementById('dotsRow');
+  dotsRow.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const done = isCompleted(actId, d);
+    dotsRow.innerHTML += `<div class="dot-item"><div class="dot-circle ${done?'done':''} ${i===0?'today':''}">${done?'✓':''}</div><span class="d-name">${DAYS[d.getDay()]}</span></div>`;
+  }
+  const done = isCompleted(actId, currentDate());
+  const btn = document.getElementById('detailCheckBtn');
+  btn.textContent = done ? '✓ Completado' : 'Marcar como completado';
+  btn.className = 'detail-check-btn' + (done ? ' done' : '');
+  document.getElementById('detailView').classList.add('open');
+}
+
+function closeDetail() { document.getElementById('detailView').classList.remove('open'); currentDetailId = null; render(); }
+function toggleFromDetail() {
+  if (!currentDetailId) return;
+  toggleCompletion(currentDetailId, currentDate());
+  openDetail(currentDetailId);
+  buildSchedule(); buildDayNav();
+}
+
+checkNotifBanner();
+render();
+</script>
+</body>
+</html>
