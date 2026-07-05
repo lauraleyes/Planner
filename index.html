@@ -276,6 +276,17 @@ body {
       <label class="form-label">Tipo</label>
       <div class="type-select" id="typeSelect"></div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Repetición</label>
+      <div class="type-select">
+        <button class="type-opt" id="repeatDaily" onclick="setRepeat('daily')">Todos los días</button>
+        <button class="type-opt" id="repeatOnce" onclick="setRepeat('once')">Solo este día</button>
+      </div>
+    </div>
+    <div class="form-group" id="dateGroup" style="display:none">
+      <label class="form-label">Fecha</label>
+      <input class="form-input" id="formDate" type="date">
+    </div>
     <div class="modal-actions">
       <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
       <button class="modal-btn confirm" onclick="saveActivity()">Guardar</button>
@@ -368,7 +379,10 @@ function buildDayNav() {
 
 function buildSchedule() {
   const d = currentDate();
-  const sorted = [...activities].sort((a,b) => a.time.localeCompare(b.time));
+  const todayStr = dateStr(d);
+  const sorted = [...activities]
+    .filter(a => a.repeat !== 'once' || a.date === todayStr)
+    .sort((a,b) => a.time.localeCompare(b.time));
   document.getElementById('schedule').innerHTML = sorted.map(a => {
     const done = isCompleted(a.id, d);
     const clickable = a.type === 'study' || a.type === 'dark';
@@ -424,7 +438,7 @@ function buildEditList() {
       <span class="ei-icon">${a.icon}</span>
       <div class="ei-info">
         <div class="ei-label">${a.label}</div>
-        <div class="ei-time">${a.time}</div>
+        <div class="ei-time">${a.time} · ${a.repeat === 'once' ? '📅 ' + (a.date || '') : '🔄 diario'}</div>
       </div>
       <div class="ei-actions">
         <button class="ei-btn" onclick="openModal('${a.id}')">✏️</button>
@@ -444,6 +458,8 @@ function deleteActivity(id) {
 let editingId = null;
 let selectedEmoji = '⭐';
 let selectedType = 'study';
+let selectedRepeat = 'daily';
+let selectedDate = '';
 
 function openModal(id) {
   editingId = id || null;
@@ -453,7 +469,9 @@ function openModal(id) {
   document.getElementById('formTime').value = act ? act.time : '10:00';
   selectedEmoji = act ? act.icon : '⭐';
   selectedType = act ? act.type : 'study';
-  buildEmojiGrid(); buildTypeSelect();
+  selectedRepeat = act ? (act.repeat || 'daily') : 'daily';
+  selectedDate = act ? (act.date || '') : '';
+  buildEmojiGrid(); buildTypeSelect(); buildRepeatSelect();
   document.getElementById('modalOverlay').classList.add('open');
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
@@ -473,15 +491,27 @@ function buildTypeSelect() {
 }
 function selectType(t) { selectedType = t; buildTypeSelect(); }
 
+function buildRepeatSelect() {
+  document.getElementById('repeatDaily').className = 'type-opt' + (selectedRepeat === 'daily' ? ' selected' : '');
+  document.getElementById('repeatOnce').className = 'type-opt' + (selectedRepeat === 'once' ? ' selected' : '');
+  document.getElementById('dateGroup').style.display = selectedRepeat === 'once' ? 'block' : 'none';
+  if (selectedRepeat === 'once' && !selectedDate) {
+    const d = new Date(); selectedDate = d.toISOString().slice(0,10);
+    document.getElementById('formDate').value = selectedDate;
+  }
+}
+function setRepeat(r) { selectedRepeat = r; buildRepeatSelect(); }
+
 function saveActivity() {
   const name = document.getElementById('formName').value.trim();
   const time = document.getElementById('formTime').value;
   if (!name || !time) { alert('Completá nombre y horario'); return; }
+  const date = selectedRepeat === 'once' ? (document.getElementById('formDate').value || selectedDate) : null;
   if (editingId) {
     const idx = activities.findIndex(a => a.id === editingId);
-    if (idx !== -1) activities[idx] = { ...activities[idx], label: name, time, icon: selectedEmoji, type: selectedType };
+    if (idx !== -1) activities[idx] = { ...activities[idx], label: name, time, icon: selectedEmoji, type: selectedType, repeat: selectedRepeat, date };
   } else {
-    activities.push({ id: genId(), label: name, time, icon: selectedEmoji, type: selectedType });
+    activities.push({ id: genId(), label: name, time, icon: selectedEmoji, type: selectedType, repeat: selectedRepeat, date });
   }
   saveActivities(); closeModal(); buildEditList();
 }
