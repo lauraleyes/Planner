@@ -11,154 +11,191 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Weekly Planner</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    background: #12101a;
-    color: #e7e1f7;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-height: 100vh;
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 0 0 80px 0;
-  }
-  .header {
-    padding: 48px 20px 16px;
-    text-align: center;
-    background: linear-gradient(180deg, #1c1030 0%, #12101a 100%);
-  }
-  .header h1 { font-size: 13px; letter-spacing: 5px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 4px; }
-  .header .moon { font-size: 28px; display: block; margin-bottom: 4px; }
-  .header .date { font-size: 15px; color: #c9b8f0; letter-spacing: 1px; }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  background: #12101a; color: #e7e1f7;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh; max-width: 420px; margin: 0 auto; padding: 0 0 80px 0;
+}
 
-  .notif-banner {
-    margin: 8px 16px;
-    padding: 12px 16px;
-    background: #1e1b2e;
-    border-radius: 12px;
-    border: 1px solid #3d2d6e;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-  }
-  .notif-banner span { font-size: 13px; color: #b9a7f0; flex: 1; }
-  .notif-banner button {
-    background: #3d2d6e;
-    border: none;
-    color: #e7e1f7;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .notif-banner.hidden { display: none; }
+/* HEADER */
+.header {
+  padding: 48px 20px 16px; text-align: center;
+  background: linear-gradient(180deg, #1c1030 0%, #12101a 100%);
+}
+.header h1 { font-size: 13px; letter-spacing: 5px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 4px; }
+.header .moon { font-size: 28px; display: block; margin-bottom: 4px; }
+.header .date { font-size: 15px; color: #c9b8f0; letter-spacing: 1px; }
 
-  .day-nav {
-    display: flex;
-    overflow-x: auto;
-    gap: 8px;
-    padding: 12px 20px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .day-nav::-webkit-scrollbar { display: none; }
-  .day-pill {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 8px 12px;
-    border-radius: 14px;
-    border: 1px solid #2e2a3d;
-    background: #1a1726;
-    cursor: pointer;
-    min-width: 48px;
-  }
-  .day-pill.active { background: #3d2d6e; border-color: #b9a7f0; }
-  .day-pill .day-name { font-size: 11px; color: #6b5f8a; text-transform: uppercase; letter-spacing: 1px; }
-  .day-pill.active .day-name { color: #c9b8f0; }
-  .day-pill .day-num { font-size: 16px; font-weight: 600; color: #9a8ec0; }
-  .day-pill.active .day-num { color: #e7e1f7; }
-  .day-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
-  .day-pill.has-activity .dot { background: #b9a7f0; }
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 420px;
+  background: #1a1726; border-top: 1px solid #2e2a3d;
+  display: flex; z-index: 50;
+}
+.nav-btn {
+  flex: 1; padding: 12px 0; background: none; border: none;
+  color: #6b5f8a; font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.nav-btn .nav-icon { font-size: 20px; }
+.nav-btn.active { color: #b9a7f0; }
 
-  .schedule { padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .slot {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px; border-radius: 14px;
-    background: #1a1726; border-left: 3px solid transparent;
-    cursor: pointer; transition: transform 0.15s;
-  }
-  .slot:active { transform: scale(0.98); }
-  .slot.meal { border-left-color: #6b5f8a; cursor: default; }
-  .slot.wake { border-left-color: #f0d080; cursor: default; }
-  .slot.study { border-left-color: #b9a7f0; }
-  .slot.dark { border-left-color: #e07090; }
-  .slot.completed { background: #1e1b2e; }
-  .slot.completed .slot-label { color: #6b5f8a; text-decoration: line-through; }
-  .slot-time { font-size: 12px; color: #6b5f8a; min-width: 40px; font-variant-numeric: tabular-nums; }
-  .slot-icon { font-size: 20px; min-width: 28px; text-align: center; }
-  .slot-label { font-size: 15px; color: #e7e1f7; flex: 1; }
-  .slot-check {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 2px solid #3d2d6e;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; flex-shrink: 0;
-  }
-  .slot.completed .slot-check { background: #b9a7f0; border-color: #b9a7f0; color: #12101a; }
-  .slot.meal .slot-check, .slot.wake .slot-check { display: none; }
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
 
-  .detail-view {
-    display: none; position: fixed; inset: 0;
-    background: #12101a; z-index: 100; flex-direction: column;
-  }
-  .detail-view.open { display: flex; }
-  .detail-header {
-    padding: 56px 20px 20px;
-    background: linear-gradient(180deg, #1c1030 0%, #12101a 100%);
-    text-align: center; position: relative;
-  }
-  .back-btn {
-    position: absolute; top: 56px; left: 20px;
-    background: none; border: none; color: #b9a7f0;
-    font-size: 24px; cursor: pointer; padding: 4px;
-  }
-  .detail-icon { font-size: 44px; display: block; margin-bottom: 8px; }
-  .detail-name { font-size: 22px; color: #e7e1f7; margin-bottom: 4px; }
-  .detail-time { font-size: 13px; color: #6b5f8a; letter-spacing: 1px; }
-  .detail-body { padding: 24px 20px; flex: 1; overflow-y: auto; }
-  .streak-card {
-    background: #1a1726; border-radius: 16px; padding: 20px;
-    text-align: center; margin-bottom: 20px; border: 1px solid #2e2a3d;
-  }
-  .streak-label { font-size: 11px; letter-spacing: 2px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 8px; }
-  .streak-number { font-size: 52px; font-weight: 700; color: #b9a7f0; line-height: 1; }
-  .streak-unit { font-size: 13px; color: #6b5f8a; margin-top: 4px; }
-  .week-dots {
-    background: #1a1726; border-radius: 16px; padding: 20px;
-    margin-bottom: 20px; border: 1px solid #2e2a3d;
-  }
-  .week-dots-label { font-size: 11px; letter-spacing: 2px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 16px; }
-  .dots-row { display: flex; justify-content: space-between; gap: 6px; }
-  .dot-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
-  .dot-item .d-name { font-size: 10px; color: #6b5f8a; text-transform: uppercase; }
-  .dot-circle {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: #2e2a3d;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-  }
-  .dot-circle.done { background: #b9a7f0; }
-  .dot-circle.today { border: 2px solid #b9a7f0; }
-  .detail-check-btn {
-    width: 100%; padding: 16px; border-radius: 14px;
-    border: none; background: #3d2d6e; color: #e7e1f7;
-    font-size: 16px; cursor: pointer; letter-spacing: 1px;
-  }
-  .detail-check-btn.done { background: #b9a7f0; color: #12101a; font-weight: 600; }
-  .detail-check-btn:active { transform: scale(0.97); }
-  .deco { text-align: center; color: #2e2a3d; font-size: 16px; letter-spacing: 6px; padding: 16px 0 8px; }
+/* DAY NAV */
+.day-nav {
+  display: flex; overflow-x: auto; gap: 8px; padding: 12px 20px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.day-nav::-webkit-scrollbar { display: none; }
+.day-pill {
+  flex-shrink: 0; display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 8px 12px; border-radius: 14px;
+  border: 1px solid #2e2a3d; background: #1a1726; cursor: pointer; min-width: 48px;
+}
+.day-pill.active { background: #3d2d6e; border-color: #b9a7f0; }
+.day-pill .day-name { font-size: 11px; color: #6b5f8a; text-transform: uppercase; letter-spacing: 1px; }
+.day-pill.active .day-name { color: #c9b8f0; }
+.day-pill .day-num { font-size: 16px; font-weight: 600; color: #9a8ec0; }
+.day-pill.active .day-num { color: #e7e1f7; }
+.day-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.day-pill.has-activity .dot { background: #b9a7f0; }
+
+/* SCHEDULE */
+.schedule { padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
+.slot {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px; border-radius: 14px; background: #1a1726;
+  border-left: 3px solid transparent; cursor: pointer; transition: transform 0.15s;
+}
+.slot:active { transform: scale(0.98); }
+.slot.meal { border-left-color: #6b5f8a; cursor: default; }
+.slot.wake { border-left-color: #f0d080; cursor: default; }
+.slot.study { border-left-color: #b9a7f0; }
+.slot.dark { border-left-color: #e07090; }
+.slot.completed { background: #1e1b2e; }
+.slot.completed .slot-label { color: #6b5f8a; text-decoration: line-through; }
+.slot-time { font-size: 12px; color: #6b5f8a; min-width: 40px; }
+.slot-icon { font-size: 20px; min-width: 28px; text-align: center; }
+.slot-label { font-size: 15px; color: #e7e1f7; flex: 1; }
+.slot-check {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid #3d2d6e;
+  display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;
+}
+.slot.completed .slot-check { background: #b9a7f0; border-color: #b9a7f0; color: #12101a; }
+.slot.meal .slot-check, .slot.wake .slot-check { display: none; }
+
+/* DETAIL VIEW */
+.detail-view {
+  display: none; position: fixed; inset: 0;
+  background: #12101a; z-index: 100; flex-direction: column;
+}
+.detail-view.open { display: flex; }
+.detail-header {
+  padding: 56px 20px 20px;
+  background: linear-gradient(180deg, #1c1030 0%, #12101a 100%);
+  text-align: center; position: relative;
+}
+.back-btn {
+  position: absolute; top: 56px; left: 20px;
+  background: none; border: none; color: #b9a7f0; font-size: 24px; cursor: pointer; padding: 4px;
+}
+.detail-icon { font-size: 44px; display: block; margin-bottom: 8px; }
+.detail-name { font-size: 22px; color: #e7e1f7; margin-bottom: 4px; }
+.detail-time { font-size: 13px; color: #6b5f8a; letter-spacing: 1px; }
+.detail-body { padding: 24px 20px; flex: 1; overflow-y: auto; }
+.streak-card {
+  background: #1a1726; border-radius: 16px; padding: 20px;
+  text-align: center; margin-bottom: 20px; border: 1px solid #2e2a3d;
+}
+.streak-label { font-size: 11px; letter-spacing: 2px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 8px; }
+.streak-number { font-size: 52px; font-weight: 700; color: #b9a7f0; line-height: 1; }
+.streak-unit { font-size: 13px; color: #6b5f8a; margin-top: 4px; }
+.week-dots { background: #1a1726; border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #2e2a3d; }
+.week-dots-label { font-size: 11px; letter-spacing: 2px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 16px; }
+.dots-row { display: flex; justify-content: space-between; gap: 6px; }
+.dot-item { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+.dot-item .d-name { font-size: 10px; color: #6b5f8a; text-transform: uppercase; }
+.dot-circle { width: 32px; height: 32px; border-radius: 50%; background: #2e2a3d; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.dot-circle.done { background: #b9a7f0; }
+.dot-circle.today { border: 2px solid #b9a7f0; }
+.detail-check-btn {
+  width: 100%; padding: 16px; border-radius: 14px; border: none;
+  background: #3d2d6e; color: #e7e1f7; font-size: 16px; cursor: pointer; letter-spacing: 1px;
+}
+.detail-check-btn.done { background: #b9a7f0; color: #12101a; font-weight: 600; }
+.detail-check-btn:active { transform: scale(0.97); }
+
+/* EDIT VIEW */
+.edit-view { padding: 16px; }
+.edit-title { font-size: 13px; letter-spacing: 3px; color: #6b5f8a; text-transform: uppercase; padding: 8px 0 16px; }
+.edit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.edit-item {
+  display: flex; align-items: center; gap: 10px;
+  background: #1a1726; border-radius: 12px; padding: 12px 14px;
+  border-left: 3px solid #2e2a3d;
+}
+.edit-item .ei-icon { font-size: 20px; }
+.edit-item .ei-info { flex: 1; }
+.edit-item .ei-label { font-size: 14px; color: #e7e1f7; }
+.edit-item .ei-time { font-size: 12px; color: #6b5f8a; }
+.edit-item .ei-actions { display: flex; gap: 8px; }
+.ei-btn {
+  background: none; border: 1px solid #2e2a3d; color: #9a8ec0;
+  border-radius: 8px; padding: 6px 10px; font-size: 13px; cursor: pointer;
+}
+.ei-btn.danger { color: #e07090; border-color: #e07090; }
+.ei-btn:active { transform: scale(0.95); }
+.add-btn {
+  width: 100%; padding: 14px; border-radius: 14px; border: 1px dashed #3d2d6e;
+  background: none; color: #b9a7f0; font-size: 15px; cursor: pointer; letter-spacing: 1px;
+}
+.add-btn:active { transform: scale(0.98); }
+
+/* MODAL */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 200; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #1a1726; border-radius: 20px 20px 0 0;
+  padding: 24px 20px 40px; width: 100%; max-width: 420px;
+}
+.modal-title { font-size: 16px; color: #c9b8f0; margin-bottom: 20px; text-align: center; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 11px; letter-spacing: 2px; color: #6b5f8a; text-transform: uppercase; margin-bottom: 6px; display: block; }
+.form-input {
+  width: 100%; background: #12101a; border: 1px solid #2e2a3d;
+  color: #e7e1f7; border-radius: 10px; padding: 12px 14px; font-size: 15px;
+}
+.form-input:focus { outline: none; border-color: #b9a7f0; }
+.type-select { display: flex; gap: 8px; flex-wrap: wrap; }
+.type-opt {
+  padding: 6px 12px; border-radius: 20px; border: 1px solid #2e2a3d;
+  background: none; color: #9a8ec0; font-size: 12px; cursor: pointer;
+}
+.type-opt.selected { background: #3d2d6e; border-color: #b9a7f0; color: #e7e1f7; }
+
+/* EMOJI PICKER */
+.emoji-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; max-height: 160px; overflow-y: auto; }
+.emoji-opt { font-size: 22px; text-align: center; padding: 6px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+.emoji-opt.selected { border-color: #b9a7f0; background: #2e2a3d; }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn {
+  flex: 1; padding: 14px; border-radius: 12px; border: none;
+  font-size: 15px; cursor: pointer;
+}
+.modal-btn.cancel { background: #2e2a3d; color: #9a8ec0; }
+.modal-btn.confirm { background: #b9a7f0; color: #12101a; font-weight: 600; }
+
+.deco { text-align: center; color: #2e2a3d; font-size: 16px; letter-spacing: 6px; padding: 16px 0 8px; }
 </style>
 </head>
 <body>
@@ -169,15 +206,35 @@
   <div class="date" id="headerDate"></div>
 </div>
 
-<div class="notif-banner" id="notifBanner">
-  <span>🔔 Activar recordatorios</span>
-  <button onclick="requestNotifications()">Activar</button>
+<!-- MAIN VIEW -->
+<div class="view active" id="viewMain">
+  <div class="day-nav" id="dayNav"></div>
+  <div class="schedule" id="schedule"></div>
+  <div class="deco">· ✦ ·</div>
 </div>
 
-<div class="day-nav" id="dayNav"></div>
-<div class="schedule" id="schedule"></div>
-<div class="deco">· ✦ ·</div>
+<!-- EDIT VIEW -->
+<div class="view" id="viewEdit">
+  <div class="edit-view">
+    <div class="edit-title">✦ Editar actividades</div>
+    <div class="edit-list" id="editList"></div>
+    <button class="add-btn" onclick="openModal()">+ Agregar actividad</button>
+  </div>
+</div>
 
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="navMain" onclick="switchView('main')">
+    <span class="nav-icon">☽</span>
+    <span>Planner</span>
+  </button>
+  <button class="nav-btn" id="navEdit" onclick="switchView('edit')">
+    <span class="nav-icon">✦</span>
+    <span>Editar</span>
+  </button>
+</div>
+
+<!-- DETAIL VIEW (overlay) -->
 <div class="detail-view" id="detailView">
   <div class="detail-header">
     <button class="back-btn" onclick="closeDetail()">←</button>
@@ -199,94 +256,102 @@
   </div>
 </div>
 
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Nueva actividad</div>
+    <div class="form-group">
+      <label class="form-label">Ícono</label>
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre</label>
+      <input class="form-input" id="formName" type="text" placeholder="Ej: Yoga">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Horario</label>
+      <input class="form-input" id="formTime" type="time">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <div class="type-select" id="typeSelect"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal()">Cancelar</button>
+      <button class="modal-btn confirm" onclick="saveActivity()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 const FULL_DAYS = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
-const activities = [
-  { id: "despertar", time: "10:00", hour: 10, min: 0,  icon: "☀️", label: "Despertarse",     type: "wake" },
-  { id: "desayuno",  time: "10:30", hour: 10, min: 30, icon: "☕", label: "Desayunar",        type: "meal" },
-  { id: "claude",    time: "11:00", hour: 11, min: 0,  icon: "🤖", label: "Claude 101",       type: "study" },
-  { id: "almuerzo",  time: "13:00", hour: 13, min: 0,  icon: "🍽️", label: "Almorzar",        type: "meal" },
-  { id: "cyber",     time: "13:30", hour: 13, min: 30, icon: "🛡️", label: "Cybersecurity",   type: "study" },
-  { id: "merienda",  time: "17:00", hour: 17, min: 0,  icon: "🌿", label: "Merendar",         type: "meal" },
-  { id: "design",    time: "17:30", hour: 17, min: 30, icon: "🎨", label: "Product Designer", type: "study" },
-  { id: "cena",      time: "20:00", hour: 20, min: 0,  icon: "🌙", label: "Cenar",            type: "meal" },
-  { id: "artes",     time: "21:00", hour: 21, min: 0,  icon: "🖤", label: "Artes Oscuras",    type: "dark" },
+const EMOJIS = ["☀️","🌙","⭐","✨","🌸","🌿","🍃","🌺","🦋","🌙","☕","🍽️","🥗","🍵","🛡️","🤖","🎨","🖤","📚","🏋️","🧘","🎵","🎮","💻","✏️","🔬","🌍","🦄","🌛","🕯️","🪄","🔮","🌈","⚡","🎯","💜","🖌️","🧠","🏃","🌊"];
+
+const TYPES = [
+  { id: 'study', label: 'Estudio', color: '#b9a7f0' },
+  { id: 'dark',  label: 'Personal', color: '#e07090' },
+  { id: 'meal',  label: 'Comida', color: '#6b5f8a' },
+  { id: 'wake',  label: 'Rutina', color: '#f0d080' },
 ];
 
-let completions = {};
-try { completions = JSON.parse(localStorage.getItem('planner_completions') || '{}'); } catch(e) {}
-function save() { try { localStorage.setItem('planner_completions', JSON.stringify(completions)); } catch(e) {} }
+const DEFAULT_ACTIVITIES = [
+  { id: "despertar", time: "10:00", icon: "☀️", label: "Despertarse",     type: "wake" },
+  { id: "desayuno",  time: "10:30", icon: "☕", label: "Desayunar",        type: "meal" },
+  { id: "claude",    time: "11:00", icon: "🤖", label: "Claude 101",       type: "study" },
+  { id: "almuerzo",  time: "13:00", icon: "🍽️", label: "Almorzar",        type: "meal" },
+  { id: "cyber",     time: "13:30", icon: "🛡️", label: "Cybersecurity",   type: "study" },
+  { id: "merienda",  time: "17:00", icon: "🌿", label: "Merendar",         type: "meal" },
+  { id: "design",    time: "17:30", icon: "🎨", label: "Product Designer", type: "study" },
+  { id: "cena",      time: "20:00", icon: "🌙", label: "Cenar",            type: "meal" },
+  { id: "artes",     time: "21:00", icon: "🖤", label: "Artes Oscuras",    type: "dark" },
+];
+
+// STORAGE
+let activities, completions;
+try { activities = JSON.parse(localStorage.getItem('planner_activities')) || null; } catch(e) {}
+if (!activities) activities = JSON.parse(JSON.stringify(DEFAULT_ACTIVITIES));
+try { completions = JSON.parse(localStorage.getItem('planner_completions') || '{}'); } catch(e) { completions = {}; }
+
+function saveActivities() { try { localStorage.setItem('planner_activities', JSON.stringify(activities)); } catch(e) {} }
+function saveCompletions() { try { localStorage.setItem('planner_completions', JSON.stringify(completions)); } catch(e) {} }
 function dateStr(d) { return d.toISOString().slice(0, 10); }
 function isCompleted(actId, d) { return !!(completions[actId] && completions[actId][dateStr(d)]); }
 function toggleCompletion(actId, d) {
   if (!completions[actId]) completions[actId] = {};
   const k = dateStr(d);
-  if (completions[actId][k]) delete completions[actId][k];
-  else completions[actId][k] = true;
-  save();
+  if (completions[actId][k]) delete completions[actId][k]; else completions[actId][k] = true;
+  saveCompletions();
 }
 function getStreak(actId) {
-  let streak = 0;
-  const d = new Date();
+  let streak = 0; const d = new Date();
   if (!isCompleted(actId, d)) d.setDate(d.getDate() - 1);
-  while (isCompleted(actId, d)) {
-    streak++;
-    d.setDate(d.getDate() - 1);
-    if (streak > 365) break;
-  }
+  while (isCompleted(actId, d)) { streak++; d.setDate(d.getDate() - 1); if (streak > 365) break; }
   return streak;
 }
+function genId() { return 'act_' + Date.now() + '_' + Math.random().toString(36).slice(2,6); }
 
+// STATE
 const today = new Date();
 let currentDayOffset = 0;
+let currentView = 'main';
 function currentDate() { const d = new Date(today); d.setDate(d.getDate() + currentDayOffset); return d; }
 
-// NOTIFICATIONS
-function checkNotifBanner() {
-  if (!('Notification' in window)) { document.getElementById('notifBanner').classList.add('hidden'); return; }
-  if (Notification.permission === 'granted') { document.getElementById('notifBanner').classList.add('hidden'); scheduleNotifications(); }
+// VIEW SWITCH
+function switchView(v) {
+  currentView = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1)).classList.add('active');
+  document.getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1)).classList.add('active');
+  if (v === 'edit') buildEditList();
+  if (v === 'main') render();
 }
 
-function requestNotifications() {
-  Notification.requestPermission().then(p => {
-    if (p === 'granted') {
-      document.getElementById('notifBanner').classList.add('hidden');
-      scheduleNotifications();
-    }
-  });
-}
-
-function scheduleNotifications() {
-  if (Notification.permission !== 'granted') return;
-  activities.forEach(act => {
-    const now = new Date();
-    const target = new Date();
-    target.setHours(act.hour, act.min, 0, 0);
-    let delay = target - now;
-    if (delay < 0) delay += 24 * 60 * 60 * 1000; // next day
-    setTimeout(() => {
-      new Notification('✦ ' + act.label, {
-        body: 'Son las ' + act.time + ' — hora de ' + act.label.toLowerCase(),
-        icon: 'icons/icon-192.png',
-        badge: 'icons/icon-192.png',
-        tag: act.id
-      });
-      // reschedule for next day
-      setTimeout(() => scheduleNotifications(), 1000);
-    }, delay);
-  });
-}
-
-// SERVICE WORKER
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
-
+// MAIN VIEW
 function buildDayNav() {
-  const nav = document.getElementById('dayNav');
-  nav.innerHTML = '';
+  const nav = document.getElementById('dayNav'); nav.innerHTML = '';
   for (let i = -3; i <= 3; i++) {
     const d = new Date(today); d.setDate(d.getDate() + i);
     const btn = document.createElement('div');
@@ -303,7 +368,8 @@ function buildDayNav() {
 
 function buildSchedule() {
   const d = currentDate();
-  document.getElementById('schedule').innerHTML = activities.map(a => {
+  const sorted = [...activities].sort((a,b) => a.time.localeCompare(b.time));
+  document.getElementById('schedule').innerHTML = sorted.map(a => {
     const done = isCompleted(a.id, d);
     const clickable = a.type === 'study' || a.type === 'dark';
     return `<div class="slot ${a.type} ${done ? 'completed' : ''}" onclick="${clickable ? `openDetail('${a.id}')` : ''}">
@@ -317,13 +383,13 @@ function buildSchedule() {
 
 function render() {
   document.getElementById('headerDate').textContent = FULL_DAYS[currentDate().getDay()] + ' ' + currentDate().getDate();
-  buildDayNav();
-  buildSchedule();
+  buildDayNav(); buildSchedule();
 }
 
+// DETAIL
 let currentDetailId = null;
 function openDetail(actId) {
-  const act = activities.find(a => a.id === actId);
+  const act = activities.find(a => a.id === actId); if (!act) return;
   currentDetailId = actId;
   document.getElementById('dIcon').textContent = act.icon;
   document.getElementById('dName').textContent = act.label;
@@ -331,8 +397,7 @@ function openDetail(actId) {
   const streak = getStreak(actId);
   document.getElementById('streakNum').textContent = streak;
   document.getElementById('streakFire').textContent = streak >= 3 ? '🔥' : streak >= 1 ? '⭐' : '';
-  const dotsRow = document.getElementById('dotsRow');
-  dotsRow.innerHTML = '';
+  const dotsRow = document.getElementById('dotsRow'); dotsRow.innerHTML = '';
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today); d.setDate(d.getDate() - i);
     const done = isCompleted(actId, d);
@@ -344,16 +409,86 @@ function openDetail(actId) {
   btn.className = 'detail-check-btn' + (done ? ' done' : '');
   document.getElementById('detailView').classList.add('open');
 }
-
 function closeDetail() { document.getElementById('detailView').classList.remove('open'); currentDetailId = null; render(); }
 function toggleFromDetail() {
   if (!currentDetailId) return;
   toggleCompletion(currentDetailId, currentDate());
-  openDetail(currentDetailId);
-  buildSchedule(); buildDayNav();
+  openDetail(currentDetailId); buildSchedule(); buildDayNav();
 }
 
-checkNotifBanner();
+// EDIT LIST
+function buildEditList() {
+  const sorted = [...activities].sort((a,b) => a.time.localeCompare(b.time));
+  document.getElementById('editList').innerHTML = sorted.map(a => `
+    <div class="edit-item">
+      <span class="ei-icon">${a.icon}</span>
+      <div class="ei-info">
+        <div class="ei-label">${a.label}</div>
+        <div class="ei-time">${a.time}</div>
+      </div>
+      <div class="ei-actions">
+        <button class="ei-btn" onclick="openModal('${a.id}')">✏️</button>
+        <button class="ei-btn danger" onclick="deleteActivity('${a.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteActivity(id) {
+  if (!confirm('¿Eliminar esta actividad?')) return;
+  activities = activities.filter(a => a.id !== id);
+  saveActivities(); buildEditList();
+}
+
+// MODAL
+let editingId = null;
+let selectedEmoji = '⭐';
+let selectedType = 'study';
+
+function openModal(id) {
+  editingId = id || null;
+  const act = id ? activities.find(a => a.id === id) : null;
+  document.getElementById('modalTitle').textContent = act ? 'Editar actividad' : 'Nueva actividad';
+  document.getElementById('formName').value = act ? act.label : '';
+  document.getElementById('formTime').value = act ? act.time : '10:00';
+  selectedEmoji = act ? act.icon : '⭐';
+  selectedType = act ? act.type : 'study';
+  buildEmojiGrid(); buildTypeSelect();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+function buildEmojiGrid() {
+  document.getElementById('emojiGrid').innerHTML = EMOJIS.map(e =>
+    `<div class="emoji-opt ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}')">${e}</div>`
+  ).join('');
+}
+function selectEmoji(e) { selectedEmoji = e; buildEmojiGrid(); }
+
+function buildTypeSelect() {
+  document.getElementById('typeSelect').innerHTML = TYPES.map(t =>
+    `<button class="type-opt ${t.id === selectedType ? 'selected' : ''}" onclick="selectType('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+function selectType(t) { selectedType = t; buildTypeSelect(); }
+
+function saveActivity() {
+  const name = document.getElementById('formName').value.trim();
+  const time = document.getElementById('formTime').value;
+  if (!name || !time) { alert('Completá nombre y horario'); return; }
+  if (editingId) {
+    const idx = activities.findIndex(a => a.id === editingId);
+    if (idx !== -1) activities[idx] = { ...activities[idx], label: name, time, icon: selectedEmoji, type: selectedType };
+  } else {
+    activities.push({ id: genId(), label: name, time, icon: selectedEmoji, type: selectedType });
+  }
+  saveActivities(); closeModal(); buildEditList();
+}
+
+// SERVICE WORKER
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(() => {}); }
+
 render();
 </script>
 </body>
