@@ -496,7 +496,7 @@ function buildRepeatSelect() {
   document.getElementById('repeatOnce').className = 'type-opt' + (selectedRepeat === 'once' ? ' selected' : '');
   document.getElementById('dateGroup').style.display = selectedRepeat === 'once' ? 'block' : 'none';
   if (selectedRepeat === 'once' && !selectedDate) {
-    const d = new Date(); selectedDate = d.toISOString().slice(0,10);
+    selectedDate = dateStr(currentDate());
     document.getElementById('formDate').value = selectedDate;
   }
 }
