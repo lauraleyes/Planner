@@ -327,7 +327,12 @@ try { completions = JSON.parse(localStorage.getItem('planner_completions') || '{
 
 function saveActivities() { try { localStorage.setItem('planner_activities', JSON.stringify(activities)); } catch(e) {} scheduleNotifications(); }
 function saveCompletions() { try { localStorage.setItem('planner_completions', JSON.stringify(completions)); } catch(e) {} }
-function dateStr(d) { return d.toISOString().slice(0, 10); }
+function dateStr(d) {
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return yr + '-' + mo + '-' + dy;
+}
 function isCompleted(actId, d) { return !!(completions[actId] && completions[actId][dateStr(d)]); }
 function toggleCompletion(actId, d) {
   if (!completions[actId]) completions[actId] = {};
@@ -506,7 +511,7 @@ function saveActivity() {
   const name = document.getElementById('formName').value.trim();
   const time = document.getElementById('formTime').value;
   if (!name || !time) { alert('Completá nombre y horario'); return; }
-  const date = selectedRepeat === 'once' ? (document.getElementById('formDate').value || selectedDate) : null;
+  const date = selectedRepeat === 'once' ? document.getElementById('formDate').value : null;
   if (editingId) {
     const idx = activities.findIndex(a => a.id === editingId);
     if (idx !== -1) activities[idx] = { ...activities[idx], label: name, time, icon: selectedEmoji, type: selectedType, repeat: selectedRepeat, date };
