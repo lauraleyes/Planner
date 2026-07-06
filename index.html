@@ -281,6 +281,7 @@ body {
       <div class="type-select">
         <button class="type-opt" id="repeatDaily" onclick="setRepeat('daily')">Todos los días</button>
         <button class="type-opt" id="repeatOnce" onclick="setRepeat('once')">Solo este día</button>
+        <button class="type-opt" id="repeatLoose" onclick="setRepeat('loose')">Tarea suelta</button>
       </div>
     </div>
     <div class="form-group" id="dateGroup" style="display:none">
@@ -386,7 +387,11 @@ function buildSchedule() {
   const d = currentDate();
   const todayStr = dateStr(d);
   const sorted = [...activities]
-    .filter(a => a.repeat !== 'once' || a.date === todayStr)
+    .filter(a => {
+      if (a.repeat === 'once') return a.date === todayStr;
+      if (a.repeat === 'loose') return !isCompleted(a.id, d);
+      return true;
+    })
     .sort((a,b) => a.time.localeCompare(b.time));
   document.getElementById('schedule').innerHTML = sorted.map(a => {
     const done = isCompleted(a.id, d);
@@ -443,7 +448,7 @@ function buildEditList() {
       <span class="ei-icon">${a.icon}</span>
       <div class="ei-info">
         <div class="ei-label">${a.label}</div>
-        <div class="ei-time">${a.time} · ${a.repeat === 'once' ? '📅 ' + (a.date || '') : '🔄 diario'}</div>
+        <div class="ei-time">${a.time} · ${a.repeat === 'once' ? '📅 ' + (a.date || '') : a.repeat === 'loose' ? '✅ tarea suelta' : '🔄 diario'}</div>
       </div>
       <div class="ei-actions">
         <button class="ei-btn" onclick="openModal('${a.id}')">✏️</button>
@@ -499,6 +504,7 @@ function selectType(t) { selectedType = t; buildTypeSelect(); }
 function buildRepeatSelect() {
   document.getElementById('repeatDaily').className = 'type-opt' + (selectedRepeat === 'daily' ? ' selected' : '');
   document.getElementById('repeatOnce').className = 'type-opt' + (selectedRepeat === 'once' ? ' selected' : '');
+  document.getElementById('repeatLoose').className = 'type-opt' + (selectedRepeat === 'loose' ? ' selected' : '');
   document.getElementById('dateGroup').style.display = selectedRepeat === 'once' ? 'block' : 'none';
   if (selectedRepeat === 'once' && !selectedDate) {
     selectedDate = dateStr(currentDate());
